@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <errno.h> // for error catch
 
 // Structure for canvas
@@ -44,6 +45,8 @@ Command *pop_back(History *his);
 
 int max(const int a, const int b);
 void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1);
+void draw_rect(Canvas *c, const int x0, const int y0, const int width, const int height);
+void draw_circle(Canvas *c, const int x0, const int y0, const int r);
 Result interpret_command(const char *command, History *his, Canvas *c, int bufsize);
 void save_history(const char *filename, History *his);
 
@@ -80,7 +83,7 @@ int main(int argc, char **argv)
     
     char buf[bufsize];
 
-    Canvas *c = init_canvas(width,height, pen);
+    Canvas *c = init_canvas(width, height, pen);
 
     printf("\n"); // required especially for windows env
     
@@ -205,6 +208,43 @@ void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1
   }
 }
 
+void draw_rect(Canvas *c, const int x0, const int y0, const int width, const int height)
+{
+  char pen = c->pen;
+
+  for(int i = 0; i < width; i++) {
+    c->canvas[x0+i][y0] = pen;
+    c->canvas[x0+i][y0+height] = pen; //距離がheightの時は点の数はheight+1なので
+  }
+
+  for(int i = 0; i < height; i++) {
+    c->canvas[x0][y0+i] = pen;
+    c->canvas[x0+width][y0+i] = pen;
+  }
+
+}
+
+void draw_circle(Canvas *c, const int x0, const int y0, const int r)
+{
+  char pen = c->pen;
+
+  int arr[2] = {1, -1};
+
+  for(int i = 0; i < 2; i++) {
+    for(int j = 0; j < 2; j++) {
+      int rx = arr[i];
+      int ry = arr[j];
+      for(int k = 1; k <= r; k++) {
+        int x = x0 + rx * k;
+        int y = y0 + ry * (int)sqrt(r * r - k * k);
+         if ( (x >= 0) && (x< c->width) && (y >= 0) && (y < c->height))
+          c->canvas[x][y] = pen;
+      }
+    }
+  }
+
+}
+
 void save_history(const char *filename, History *his)
 {
   const char *default_history_file = "history.txt";
@@ -264,6 +304,64 @@ Result interpret_command(const char *command, History *his, Canvas *c, int bufsi
     return NORMAL;
   }
 
+  //rect処理
+  if (strcmp(s, "rect") == 0) {
+    int p[4] = {0}; // p[0]: x0, p[1]: y0, p[2]: width, p[3]: height 
+    char *b[4];
+    for (int i = 0 ; i < 4; i++){
+        b[i] = strtok(NULL, " ");
+        if (b[i] == NULL){
+          clear_command();
+          printf("the number of point is not enough.\n");
+          return ERROR;
+        }
+    }
+    for (int i = 0 ; i < 4 ; i++){
+        char *e;
+        long v = strtol(b[i],&e, 10);
+        if (*e != '\0'){
+          clear_command();
+          printf("Non-int value is included.\n");
+          return ERROR;
+        }
+        p[i] = (int)v;
+    }
+    
+    draw_rect(c,p[0],p[1],p[2],p[3]);
+    clear_command();
+    printf("1 rect drawn\n");
+    return NORMAL;
+  }
+
+   //rect処理
+  if (strcmp(s, "circle") == 0) {
+    int p[3] = {0}; // p[0]: x0, p[1]: y0, p[2]: r
+    char *b[4];
+    for (int i = 0 ; i < 3; i++){
+        b[i] = strtok(NULL, " ");
+        if (b[i] == NULL){
+          clear_command();
+          printf("the number of point is not enough.\n");
+          return ERROR;
+        }
+    }
+    for (int i = 0 ; i < 3 ; i++){
+        char *e;
+        long v = strtol(b[i],&e, 10);
+        if (*e != '\0'){
+          clear_command();
+          printf("Non-int value is included.\n");
+          return ERROR;
+        }
+        p[i] = (int)v;
+    }
+    
+    draw_circle(c,p[0],p[1],p[2]);
+    clear_command();
+    printf("1 circle drawn\n");
+    return NORMAL;
+  }
+  
   if (strcmp(s, "save") == 0) {
     s = strtok(NULL, " ");
     save_history(s, his);
