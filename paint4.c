@@ -225,6 +225,21 @@ void draw_rect(Canvas *c, const int x0, const int y0, const int width, const int
 
 }
 
+void draw_box(Canvas *c, const int x0, const int y0, const int width, const int height)
+{
+  char pen = c->pen;
+
+  for(int i = 0; i <= height; i++) {
+    for(int j = 0; j <= width; j++) {
+      int x = x0 + j;
+      int y = y0 + i;
+      if ( (x >= 0) && (x< c->width) && (y >= 0) && (y < c->height))
+        c->canvas[x][y] = pen;
+    }
+  }
+
+}
+
 void draw_circle(Canvas *c, const int x0, const int y0, const int r)
 {
   char pen = c->pen;
@@ -356,6 +371,35 @@ Result interpret_command(const char *command, History *his, Canvas *c, int bufsi
     return NORMAL;
   }
 
+  //rect処理
+  if (strcmp(s, "box") == 0) {
+    int p[4] = {0}; // p[0]: x0, p[1]: y0, p[2]: width, p[3]: height 
+    char *b[4];
+    for (int i = 0 ; i < 4; i++){
+        b[i] = strtok(NULL, " ");
+        if (b[i] == NULL){
+          clear_command();
+          printf("the number of point is not enough.\n");
+          return ERROR;
+        }
+    }
+    for (int i = 0 ; i < 4 ; i++){
+        char *e;
+        long v = strtol(b[i],&e, 10);
+        if (*e != '\0'){
+          clear_command();
+          printf("Non-int value is included.\n");
+          return ERROR;
+        }
+        p[i] = (int)v;
+    }
+    
+    draw_box(c,p[0],p[1],p[2],p[3]);
+    clear_command();
+    printf("1 rect drawn\n");
+    return NORMAL;
+  }
+
    //rect処理
   if (strcmp(s, "circle") == 0) {
     int p[3] = {0}; // p[0]: x0, p[1]: y0, p[2]: r
@@ -424,8 +468,8 @@ Result interpret_command(const char *command, History *his, Canvas *c, int bufsi
     reset_canvas(c);
 
     pop_back(his);
-    c->pen = '*'; //最初の文字に戻す
-
+    c->pen = '*';
+    
     Command *p = his->begin;
     if(p == NULL) {
       clear_command();
