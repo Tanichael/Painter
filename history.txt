@@ -1,3 +1,7 @@
-line 10 10 30 30
-line 20 20 20 40
-line 10 10 10 30
+line 10 10 20 20
+line 20 20 20 30
+line 20 20 30 20
+circle 20 20 5
+chpen s
+line 10 10 20 20
+rect 10 10 20 20
